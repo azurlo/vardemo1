@@ -1,3 +1,5 @@
+# python tkinter should be installed as far as python-devel package.
+# next solution for CentOS 7: 'yum install -y python-devel tkinter'
 matplotlib==2.2.2
 numpy==1.14.5
 Quandl==3.3.0
