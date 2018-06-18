@@ -18,7 +18,7 @@ class Connector(object):
     def __init__(self, company, start_date):
         self._initial_counter = 1
         self.increment = 2
-        self.delay = 0.1
+        self.delay = 1
         self.max_counts = 60
         self.company = company
         self.start_date = start_date
