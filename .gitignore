@@ -83,3 +83,4 @@ Session.vim
 # Vagrant
 .vagrant
 
+.idea/
