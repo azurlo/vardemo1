@@ -84,3 +84,4 @@ Session.vim
 .vagrant
 
 .idea/
+slurm-*.out
