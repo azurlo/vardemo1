@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 #SBATCH --mem=1000M
-#SBATCH -c=1
+#SBATCH -c1
 
 sudo yum install -y python-devel tkinter
 sudo pip install -r requirements.txt
