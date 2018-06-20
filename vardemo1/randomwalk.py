@@ -2,19 +2,20 @@
 import argparse
 import csv
 import math
+import pickle
 from os import path, makedirs
 from random import randint
 from sys import exit
+from time import sleep
 
 import numpy
-quandl = None
-from matplotlib import pyplot as plt
+import pandas
 
 
 TRADING_DAYS = 252  # Number of trading days on stock
 
-class Connector(object):
 
+class Connector(object):
     def __init__(self, company, start_date):
         self._initial_counter = 1
         self.increment = 2
@@ -27,7 +28,7 @@ class Connector(object):
         self.verbose = True
 
     def get_data(self):
-        from time import sleep
+        import quandl
         if self.token:
             quandl.ApiConfig.api_key = self.token
 
@@ -45,6 +46,9 @@ class Connector(object):
                     print(e)
                 self.delay = self.delay * self.increment
         raise ("Failed to get data from quandl after {0} tries".format(self.max_counts))
+
+    def get_local_data(self):
+        pass
 
 
 class DataModel(object):
@@ -64,6 +68,7 @@ class DataModel(object):
         self.use_cache = False
         self.iter_count = 1000
         self._cache_file = None
+        self.from_csv = None
 
     def _save_to_csv(self, file_path):
         output_dir = path.dirname(file_path)
@@ -78,24 +83,33 @@ class DataModel(object):
         output_dir = path.dirname(file_path)
         if not path.exists(output_dir):
             makedirs(path.dirname(file_path))
-        from pickle import dump
         if self.verbose:
             print("Trying save {0} to cache".format(file_path))
-        dump(self._raw_data, open(file_path, 'wb'))
+        pickle.dump(self._raw_data, open(file_path, 'wb'))
         if self.verbose:
             print("Cache saved to {0}".format(file_path))
 
+    def _from_csv(self, file_path):
+        data = {}
+        with open(file_path, 'rb') as csv_file:
+            csv_reader = csv.DictReader(csv_file)
+            for line in csv_reader:
+                if line['ticker'] == self._connector.company:
+                    data[pandas.Timestamp(line['date'])] = line
+                    line['Close'] = numpy.float64(line['close'])
+                    del line['ticker']
+                    del line['date']
+        self._raw_data = pandas.DataFrame.from_dict(data, orient='index')
+
     def _from_cache(self, file_path):
         try:
-            from pickle import load
-            data = load(open(file_path, 'rb'))
+            data = pickle.load(open(file_path, 'rb'))
             if self.verbose:
                 print("Loaded data from a local cache for object: {0}".format(file_path))
             self._raw_data = data
         except Exception as e:
             if self.verbose:
                 print("Failed to load data from cache: {0}".format(e))
-
 
     def _get_data(self):
         marketd = self._raw_data
@@ -119,11 +133,12 @@ class DataModel(object):
             data.append(price_list)
         self.data = data
 
-
     def run(self):
         self._connector.verbose = self.verbose
         if self.use_cache:
             self._from_cache(self.use_cache)
+        if self.from_csv:
+            self._from_csv(self.from_csv)
         if self._raw_data is None:
             self._raw_data = self._connector.get_data()
         if self.to_cache:
@@ -136,15 +151,15 @@ class DataModel(object):
 
 class DataPlot(object):
     def __init__(self, data):
+        import matplotlib
+        matplotlib.use('agg')
+        from matplotlib import pyplot as plt
+        self._plt = plt
+
         self.verbose = False
-        self._figure, self._axis = plt.subplots()
+        self._figure, self._axis = self._plt.subplots()
         for row in data:
             self._axis.plot(row[4:])
-
-    def show_plot(self):
-        if self.verbose:
-            print("Drawing plot")
-        plt.show()
 
     def save_plot(self, file_path):
         if self.verbose:
@@ -162,7 +177,8 @@ def _parse_args():
     parser.add_argument('-t', '--quandl-token', help='get token from www.quandl.com')
     parser.add_argument('-s', '--start-date', default='2018-01-01', help='example: %(default)s')
     parser.add_argument('-o', '--output-dir', default=path.join(path.dirname(path.abspath(__file__)), 'outputs'))
-    parser.add_argument('-p', '--plot', choices=('show', 'save'), help='show plot / save plot to .png')
+    parser.add_argument('--from-csv', help='path to wiki csv file')
+    parser.add_argument('-p', '--plot', action='store_true', help='create plot and save it to .png')
     parser.add_argument('-m', '--make-cache', help='Make a cache file to specified directory')
     parser.add_argument('-u', '--use-cache', help='Use a cache file from specified directory')
     parser.add_argument('-v', '--verbose', action='store_true')
@@ -171,9 +187,6 @@ def _parse_args():
 
 def main():
     args = _parse_args()
-    # Because quandl does internal checks and it slows down --help.
-    global quandl
-    import quandl
     data_model = DataModel(args.company, args.start_date)
     if args.quandl_token:
         data_model.token = args.quandl_token
@@ -185,6 +198,7 @@ def main():
         data_model.verbose = args.verbose
     if args.snum:
         data_model.iter_count = args.snum
+    data_model.from_csv = args.from_csv
 
     data_model.to_csv = path.join(args.output_dir, '{0}_{1}.csv'.format(args.company, args.start_date))
     data_model.run()
@@ -193,9 +207,7 @@ def main():
         plot = DataPlot(data_model.data)
         if args.verbose:
             plot.verbose = args.verbose
-        if args.plot == 'show':
-            plot.show_plot()
-        if args.plot == 'save':
+        if args.plot:
             plot.save_plot(path.join(args.output_dir, '{0}_{1}.png'.format(args.company, args.start_date)))
 
 
