@@ -1,4 +1,7 @@
 #!/bin/bash -l
+
+#SBATCH --mem=1000M
+
 sudo yum install -y python-devel tkinter
 sudo pip install -r requirements.txt
 
