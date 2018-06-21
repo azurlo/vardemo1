@@ -4,7 +4,7 @@
 
 cd /apps/vardemo1
 
-sudo yum install -y python-devel tkinter > /dev/null
+# sudo yum install -y python-devel tkinter > /dev/null
 sudo pip install -r requirements.txt > /dev/null
 
 symbol=$(< companies.csv head -$(($SLURM_ARRAY_TASK_ID+1)) | tail -1 | cut -d "," -f1)
