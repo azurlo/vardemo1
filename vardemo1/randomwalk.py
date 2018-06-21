@@ -5,8 +5,7 @@ import math
 import pickle
 from os import path, makedirs
 from random import randint
-from sys import exit
-from sys import stdout, stderr
+from sys import exit, stdout, stderr
 from time import sleep
 
 import numpy
