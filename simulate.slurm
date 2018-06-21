@@ -2,10 +2,19 @@
 
 #SBATCH --mem=1000M
 
-sudo yum install -y python-devel tkinter
-sudo pip install -r requirements.txt
+cd /apps/vardemo1
+
+sudo yum install -y python-devel tkinter > /dev/null
+sudo pip install -r requirements.txt > /dev/null
 
 symbol=$(< companies.csv head -$(($SLURM_ARRAY_TASK_ID+1)) | tail -1 | cut -d "," -f1)
-python vardemo1/randomwalk.py -v -c $symbol -o /tmp --from-csv WIKI_PRICES_5ef6d81a50fea63448e9dbaf8e633881.csv
+mkdir /tmp/${USER}
+$(python vardemo1/randomwalk.py -c $symbol -o /tmp/${USER} --from-csv WIKI_PRICES_2018-01-01)
 
-gsutil cp /tmp/${symbol}_*.csv gs://risk-vardemo1/
+ERROR_CODE=$?
+
+if [ ${ERROR_CODE} != 0 ]; then
+	echo error $symbol not found in quotes
+else
+	gsutil cp /tmp/${USER}/${symbol}_*.csv gs://risk-vardemo1/
+fi

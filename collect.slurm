@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 #find /tmp -type f -print | xargs -- rm -f --
-rm -f /tmp/*
+rm -f /tmp/${USER}/*
 
 echo collected files:
-gsutil ls -r gs://risk-vardemo1
+gsutil ls -l gs://risk-vardemo1

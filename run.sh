@@ -1,7 +1,9 @@
 #!/bin/bash -l
-
+basedir=$(dirname $0)
 N=500
 
-simulate_job=$(sbatch --array=1-${N} simulate.slurm | cut -f 4 -d' ')
+rm -rf /tmp/${USER}*
 
-sbatch --dependency=afterok:${simulate_job} collect.slurm
+simulate_job=$(sbatch --array=1-${N} ${basedir}/simulate.slurm | cut -f 4 -d' ')
+
+sbatch --dependency=afterok:${simulate_job} ${basedir}/collect.slurm
