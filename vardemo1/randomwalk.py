@@ -6,6 +6,7 @@ import pickle
 from os import path, makedirs
 from random import randint
 from sys import exit
+from sys import stdout, stderr
 from time import sleep
 
 import numpy
@@ -34,16 +35,16 @@ class Connector(object):
 
         while self._initial_counter <= self.max_counts:
             if self.verbose:
-                print("Delay set to {0} seconds".format(self.delay))
+                sys.stderr.write("Delay set to {0} seconds\n".format(self.delay))
             sleep(self.delay)
             try:
                 data = quandl.get(self.link, start_date=self.start_date)
                 if self.verbose:
-                    print("Data recieved from quandl after {0} tries".format(self._initial_counter))
+                    sys.stderr.write("Data recieved from quandl after {0} tries\n".format(self._initial_counter))
                 return data
             except Exception as e:
                 if self.verbose:
-                    print(e)
+                    sys.stderr.write("{0}\n".formar(e))
                 self.delay = self.delay * self.increment
         raise ("Failed to get data from quandl after {0} tries".format(self.max_counts))
 
@@ -75,7 +76,7 @@ class DataModel(object):
         if not path.exists(output_dir):
             makedirs(output_dir)
         with open(file_path, 'wb') as outfile:
-            csv_writer = csv.writer(outfile)
+            csv_writer = csv.writer(sys.stdout)
             for row in self.data:
                 csv_writer.writerow(row)
 
@@ -84,10 +85,10 @@ class DataModel(object):
         if not path.exists(output_dir):
             makedirs(path.dirname(file_path))
         if self.verbose:
-            print("Trying save {0} to cache".format(file_path))
+            sys.stderr.write("Trying save {0} to cache\n".format(file_path))
         pickle.dump(self._raw_data, open(file_path, 'wb'))
         if self.verbose:
-            print("Cache saved to {0}".format(file_path))
+            sys.stderr.write("Cache saved to {0}\n".format(file_path))
 
     def _from_csv(self, file_path):
         data = {}
@@ -105,11 +106,11 @@ class DataModel(object):
         try:
             data = pickle.load(open(file_path, 'rb'))
             if self.verbose:
-                print("Loaded data from a local cache for object: {0}".format(file_path))
+                sys.stderr.write("Loaded data from a local cache for object: {0}\n".format(file_path))
             self._raw_data = data
         except Exception as e:
             if self.verbose:
-                print("Failed to load data from cache: {0}".format(e))
+                sys.stderr.write("Failed to load data from cache: {0}\n".format(e))
 
     def _get_data(self):
         marketd = self._raw_data
@@ -163,10 +164,10 @@ class DataPlot(object):
 
     def save_plot(self, file_path):
         if self.verbose:
-            print("Saving plot to {0}".format(file_path))
+            sys.stderr.write("Saving plot to {0}\n".format(file_path))
         self._figure.savefig(file_path)
         if self.verbose:
-            print("Plot saved to {0}".format(file_path))
+            sys.stderr.write("Plot saved to {0}\n".format(file_path))
 
 
 def _parse_args():
