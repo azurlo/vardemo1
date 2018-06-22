@@ -1,20 +1,14 @@
 #!/bin/bash -l
 
-#SBATCH --mem=1000M
+#SBATCH -J simulate
+#SBATCH --mem=1G
+#SBATCH -c1
 
-cd /apps/vardemo1
+dir=${1}
 
 # sudo yum install -y python-devel tkinter > /dev/null
-sudo pip install -r requirements.txt > /dev/null
+( cd $dir; sudo pip install -r requirements.txt 2> /dev/null 1> /dev/null )
 
-symbol=$(< companies.csv head -$(($SLURM_ARRAY_TASK_ID+1)) | tail -1 | cut -d "," -f1)
-mkdir /tmp/${USER}
-$(python vardemo1/randomwalk.py -c $symbol -o /tmp/${USER} --from-csv WIKI_PRICES_2018-01-01)
+symbol=$(< $dir/companies.csv head -$(($SLURM_ARRAY_TASK_ID+1)) | tail -1 | cut -d "," -f1)
 
-ERROR_CODE=$?
-
-if [ ${ERROR_CODE} != 0 ]; then
-	echo error $symbol not found in quotes
-else
-	gsutil cp /tmp/${USER}/${symbol}_*.csv gs://risk-vardemo1/
-fi
+( python $dir/vardemo1/randomwalk.py -c $symbol --from-csv $dir/WIKI_PRICES_2018-01-01; if [ $? != 0 ]; then >&2 echo error $symbol; fi ) | gsutil -q cp - gs://risk-vardemo1/${symbol}.csv
