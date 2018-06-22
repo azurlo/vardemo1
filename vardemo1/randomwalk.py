@@ -70,14 +70,19 @@ class DataModel(object):
         self._cache_file = None
         self.from_csv = None
 
+    # def _save_to_csv(self, file_path):
+    #     output_dir = path.dirname(file_path)
+    #     if not path.exists(output_dir):
+    #         makedirs(output_dir)
+    #     with open(file_path, 'wb') as outfile:
+    #         csv_writer = csv.writer(stdout)
+    #         for row in self.data:
+    #             csv_writer.writerow(row)
+
     def _save_to_csv(self, file_path):
-        output_dir = path.dirname(file_path)
-        if not path.exists(output_dir):
-            makedirs(output_dir)
-        with open(file_path, 'wb') as outfile:
-            csv_writer = csv.writer(stdout)
-            for row in self.data:
-                csv_writer.writerow(row)
+        csv_writer = csv.writer(stdout)
+        for row in self.data:
+            csv_writer.writerow(row)
 
     def _save_to_cache(self, file_path):
         output_dir = path.dirname(file_path)
