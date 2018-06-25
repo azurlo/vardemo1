@@ -1,0 +1,9 @@
+# htcondor submit script for runrandom
+executable              = run_condor.sh
+arguments               = $(Process)
+transfer_input_files    = randomwalk.py,companies.csv
+should_transfer_files   = IF_NEEDED
+when_to_transfer_output = ON_EXIT
+log                     = run.$(Process).log
+transfer_output_files   = outputs
+queue 10
